@@ -27,8 +27,10 @@ RUN apt-get update && apt-get install -y \
 # Install npm dependencies
 RUN npm install --save-dev electron --legacy-peer-deps
 
+
 # Install project dependencies
 COPY . . 
+COPY package*.json ./
 RUN npm install
 
 # Make the start script executable
