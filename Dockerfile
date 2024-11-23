@@ -1,40 +1,28 @@
-FROM node:slim
+# use the version that corresponds to your electron version
+FROM node:18-slim
 
-# Set the working directory
-WORKDIR /usr/src/app
+# install electron dependencies or more if your library has other dependencies
+RUN apt-get update && apt-get install \
+    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 \
+    -yq --no-install-suggests --no-install-recommends \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy package.json and package-lock.json for dependency installation
-COPY package*.json ./
+# copy the source into /app
+WORKDIR /app
+COPY . .
+RUN chown -R node /app
 
-# Update and install necessary dependencies for Electron
-RUN apt-get update && apt-get install -y \
-    libgtkextra-dev \
-    libgconf2-dev \
-    libnss3 \
-    libasound2 \
-    libxtst-dev \
-    libxss1 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxslt1-dev \
-    libasound2-dev \
-    && apt-get clean
-
-# Install npm dependencies
-RUN npm install --save-dev electron --legacy-peer-deps
-
-
-# Install project dependencies
-COPY . . 
-COPY package*.json ./
+# install node modules and perform an electron rebuild
+USER node
 RUN npm install
+RUN npx electron-rebuild
 
-# Make the start script executable
-RUN chmod +x /usr/src/app/start.sh
+# Electron needs root for sand boxing
+# see https://github.com/electron/electron/issues/17972
+USER root
+RUN chown root /app/node_modules/electron/dist/chrome-sandbox
+RUN chmod 4755 /app/node_modules/electron/dist/chrome-sandbox
 
-# Set the command to run your application
-CMD ["/usr/src/app/start.sh"]
+# Electron doesn't like to run as root
+USER node
+CMD bash
