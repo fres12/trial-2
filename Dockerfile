@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Install npm dependencies
-RUN npm install --save-dev electron
+RUN npm install --save-dev electron --legacy-peer-deps
 
 # Install project dependencies
 COPY . . 
