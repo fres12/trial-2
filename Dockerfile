@@ -1,42 +1,25 @@
-# Use a compatible Node.js version
-FROM node:18-slim
+FROM node:18
 
-# Install Electron dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    libx11-xcb1 \
-    libxcb-dri3-0 \
-    libxtst6 \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
-    libxss1 \
-    libasound2 \
+LABEL RUN="podman run -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v $(pwd)/src:/app/src --rm -it electron-wrapper bash"
+RUN apt-get update && apt-get install \
+    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 \
+    -yq --no-install-suggests --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
-# Copy package.json and package-lock.json
+WORKDIR /src
 COPY package*.json ./
+RUN chown -R node /app
 
-# Install dependencies as root to avoid permission issues
-RUN npm install --legacy-peer-deps
-
-# Copy application files
-COPY . .
-
-# Rebuild native modules for Electron
+USER node
+RUN npm install
 RUN npx electron-rebuild
 
-# Set correct permissions for the app folder
-RUN chown -R node:node /app
-
-# Switch to a non-root user
-USER node
-
-# Electron needs special sandbox permissions (fix known issue)
+# Electron needs root for sand boxing
+# see https://github.com/electron/electron/issues/17972
+USER root
+RUN chown root /app/node_modules/electron/dist/chrome-sandbox
 RUN chmod 4755 /app/node_modules/electron/dist/chrome-sandbox
 
-# Default command
-CMD ["bash"]
+# Electron doesn't like to run as root
+USER node
+CMD bash
