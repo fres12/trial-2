@@ -16,7 +16,7 @@ RUN npm config set cache /tmp/npm-cache
 # Install dependencies as root
 USER root
 RUN npm cache clean --force
-RUN npm install --legacy-peer-deps --loglevel verbose
+RUN npm install
 
 # Electron-specific permissions
 RUN chown root /programmable-matter/node_modules/electron/dist/chrome-sandbox
