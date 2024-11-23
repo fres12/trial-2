@@ -12,7 +12,7 @@ USER programmable-matter
 WORKDIR /programmable-matter
 COPY . .
 RUN npm install --legacy-peer-deps
-npm audit fix --force
+RUN npm audit fix --force
 RUN npx electron-rebuild
 
 # Electron needs root for sandboxing
