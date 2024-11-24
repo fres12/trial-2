@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:18
 
 # Install dependencies needed for Electron
 RUN apt-get update && apt-get install \
@@ -6,11 +6,25 @@ RUN apt-get update && apt-get install \
     -yq --no-install-suggests --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-COPY package*.json ./
-RUN  npm install --production
+# Add a non-root user
+RUN useradd -d /custom-app custom-app
+WORKDIR /custom-app
 COPY . .
-RUN npm run build
-    
-EXPOSE 3000
+
+# Configure npm cache location
+RUN npm config set cache /tmp/npm-cache
+
+# Install dependencies as root
+USER root
+RUN npm cache clean --force
+RUN npm install
+
+# Electron-specific permissions
+RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
+RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
+
+# Switch to the non-root user
+USER custom-app
+
+# Start the application
 CMD npm run start
