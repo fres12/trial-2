@@ -6,25 +6,11 @@ RUN apt-get update && apt-get install \
     -yq --no-install-suggests --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Add a non-root user
-RUN useradd -d /programmable-matter programmable-matter
-WORKDIR /programmable-matter
+WORKDIR /app
+COPY package*.json ./
+RUN  npm install --production
 COPY . .
-
-# Configure npm cache location
-RUN npm config set cache /tmp/npm-cache
-
-# Install dependencies as root
-USER root
-RUN npm cache clean --force
-RUN npm install
-
-# Electron-specific permissions
-RUN chown root /programmable-matter/node_modules/electron/dist/chrome-sandbox
-RUN chmod 4755 /programmable-matter/node_modules/electron/dist/chrome-sandbox
-
-# Switch to the non-root user
-USER programmable-matter
-
-# Start the application
+RUN npm run build
+    
+EXPOSE 3000
 CMD npm run start
