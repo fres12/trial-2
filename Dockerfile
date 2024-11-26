@@ -7,20 +7,24 @@ RUN apt-get update && apt-get install \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add a non-root user
-RUN useradd -d /custom-app custom-app
+RUN useradd -m -d /custom-app custom-app
 WORKDIR /custom-app
 COPY . .
 
 # Configure npm cache location
 RUN npm config set cache /tmp/npm-cache
 
+# Install dependencies as root
+USER root
+RUN npm cache clean --force
+
+# Set ownership of the working directory and node_modules
+RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
+
 # Set npm global directory to avoid permission issues
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
 
-# Install dependencies as root
-USER root
-RUN npm cache clean --force
 RUN npm install
 
 # Electron-specific permissions
