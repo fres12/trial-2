@@ -14,6 +14,10 @@ COPY . .
 # Configure npm cache location
 RUN npm config set cache /tmp/npm-cache
 
+# Set npm global directory to avoid permission issues
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
+
 # Install dependencies as root
 USER root
 RUN npm cache clean --force
@@ -21,17 +25,16 @@ RUN npm cache clean --force
 # Set ownership of the working directory and node_modules
 RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
 
-# Set npm global directory to avoid permission issues
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
-ENV PATH=$PATH:/home/node/.npm-global/bin
-
+# Install npm dependencies as the non-root user
+USER custom-app
 RUN npm install
 
 # Electron-specific permissions
+USER root
 RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
 RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 
-# Switch to the non-root user
+# Switch back to the non-root user
 USER custom-app
 
 # Start the application
