@@ -55,7 +55,7 @@ function menuSetup() {
 					label: "About",
 					click: () => {
 						dialog.showMessageBox(mainWindow, {
-							type: "infoo",
+							type: "info",
 							title: "About",
 							message: "todometer is built by @cassidoo",
 							detail:
