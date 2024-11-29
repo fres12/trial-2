@@ -21,9 +21,7 @@ provider "aws" {
 resource "aws_instance" "app_server" {
   ami           = "ami-001f2488b35ca8aad"
   instance_type = "t2.micro"
-  vpc_security_group_ids = ["vpc-0dae14b33cf8853f0"]
   key_name      = "key-pair-devopspso"
-  
 
   tags = {
     Name = "to-do-list"
