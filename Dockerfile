@@ -1,41 +1,36 @@
+# Gunakan Node.js versi LTS terbaru
 FROM node:22
 
-# Install dependencies needed for Electron
-RUN apt-get update && apt-get install \
-    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 libdrm2 libgbm1 \
-    -yq --no-install-suggests --no-install-recommends \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install dependencies yang diperlukan untuk Electron
+RUN apt-get update && apt-get install -yq --no-install-recommends \
+    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 \
+    libxss1 libasound2 libdrm2 libgbm1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Add a non-root user
+# Tambahkan user non-root
 RUN useradd -m -d /custom-app custom-app
+
+# Atur direktori kerja
 WORKDIR /custom-app
+
+# Salin file package.json dan package-lock.json terlebih dahulu
+COPY package*.json ./
+
+# Install dependencies sebagai user root
+RUN npm install --no-optional && \
+    npm cache clean --force
+
+# Salin semua file dari direktori proyek ke dalam container
 COPY . .
 
-# Configure npm cache location
-RUN npm config set cache /tmp/npm-cache
+# Set hak akses direktori
+RUN chown -R custom-app:custom-app /custom-app
 
-# Set npm global directory to avoid permission issues
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
-ENV PATH=$PATH:/home/node/.npm-global/bin
-
-# Install dependencies as root
-USER root
-RUN npm cache clean --force
-
-# Set ownership of the working directory and node_modules
-RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
-
-# Install npm dependencies as the non-root user
-USER custom-app
-RUN npm install
-
-# Electron-specific permissions
-USER root
-RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
-RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
-
-# Switch back to the non-root user
+# Jalankan aplikasi dengan user non-root
 USER custom-app
 
-# Start the application
-CMD npm run start
+# Port default yang digunakan aplikasi
+EXPOSE 3000
+
+# Jalankan aplikasi
+CMD ["npm", "run", "start"]
