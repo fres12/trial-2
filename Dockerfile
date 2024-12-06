@@ -10,12 +10,6 @@ RUN apt-get update && apt-get install \
 RUN useradd -m -d /custom-app custom-app
 WORKDIR /custom-app
 
-# Copy package.json and package-lock.json first
-COPY package.json package-lock.json ./
-
-# Debug to check if package.json is copied
-RUN ls -la
-
 # Copy the rest of the application
 COPY . .
 
@@ -27,8 +21,12 @@ RUN ls -la
 
 # Fix permissions for Electron chrome-sandbox binary AFTER npm install
 USER root
-RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox && \
+RUN chown root:root /custom-app/node_modules/electron/dist/chrome-sandbox && \
     chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
+
+# Optionally enable unprivileged user namespaces (workaround #3)
+RUN echo "kernel.unprivileged_userns_clone=1" > /etc/sysctl.d/99-userns.conf && \
+    sysctl -p /etc/sysctl.d/99-userns.conf || true
 
 # Set npm cache location
 RUN npm config set cache /tmp/npm-cache
@@ -36,11 +34,6 @@ RUN npm config set cache /tmp/npm-cache
 # Set npm global directory to avoid permission issues
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
-
-# Electron-specific permissions
-USER root
-RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
-RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 
 # Set ownership of the working directory and node_modules
 RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
@@ -51,5 +44,5 @@ USER custom-app
 # Expose port for the application
 EXPOSE 3000
 
-# Start the application
-CMD npm run start
+# Start the application with --no-sandbox as a fallback
+CMD npm run start -- --no-sandbox
