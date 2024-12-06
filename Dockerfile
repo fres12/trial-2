@@ -1,45 +1,41 @@
-# Gunakan image Node.js versi LTS terbaru
 FROM node:22
 
-# Install dependencies untuk Electron dan alat tambahan
-RUN apt-get update && apt-get install -yq --no-install-recommends \
-    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 \
-    libxss1 libasound2 libdrm2 libgbm1 xvfb wine \
+# Install dependencies needed for Electron
+RUN apt-get update && apt-get install \
+    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 libdrm2 libgbm1 \
+    -yq --no-install-suggests --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Tambahkan user non-root
+# Add a non-root user
 RUN useradd -m -d /custom-app custom-app
 WORKDIR /custom-app
-
-# Salin aplikasi ke dalam container
 COPY . .
 
-# Konfigurasi npm cache dan direktori global untuk mencegah masalah izin
+# Configure npm cache location
 RUN npm config set cache /tmp/npm-cache
+
+# Set npm global directory to avoid permission issues
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
 
-# Environment variables untuk Electron
-ENV ELECTRON_RUN_AS_NODE=false
-ENV ELECTRON_IS_DEV=false
-
-# Instal dependensi sebagai user root
+# Install dependencies as root
 USER root
-RUN npm install -g npm@latest && npm cache clean --force
-RUN chown -R custom-app:custom-app /custom-app
+RUN npm cache clean --force
 
-# Instal dependensi aplikasi sebagai user non-root
+# Set ownership of the working directory and node_modules
+RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
+
+# Install npm dependencies as the non-root user
 USER custom-app
-RUN npm install && npm run postinstall || echo "Postinstall script failed, continuing..."
+RUN npm install
 
 # Electron-specific permissions
 USER root
-RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox && \
-    chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
+RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
+RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
+
+# Switch back to the non-root user
 USER custom-app
 
-# Expose port aplikasi
-EXPOSE 3000
-
-# Start aplikasi menggunakan xvfb untuk mendukung GUI di lingkungan headless
-CMD bash -c "Xvfb :99 -screen 0 1024x768x16 & export DISPLAY=:99 && npm run start"
+# Start the application
+CMD npm run start
