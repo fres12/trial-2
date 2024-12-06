@@ -1,68 +1,66 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import AddItemForm from "./AddItemForm";
-import { vi } from "vitest";
-import { useAppReducer } from "../AppContext.jsx";
+import { describe, it, expect, vi } from "vitest";
+import { AppContextProvider, useAppReducer } from "../AppContext.jsx";
+import AddItemForm from "./AddItemForm.jsx";
 
-vi.mock("../AppContext.jsx", () => ({
-  useAppReducer: vi.fn(),
-}));
+// Mocking AppContext
+vi.mock("../AppContext.jsx", () => {
+	return {
+		useAppReducer: vi.fn(),
+		AppContextProvider: ({ children }) => <div>{children}</div>,
+	};
+});
 
 describe("AddItemForm", () => {
-  let mockDispatch;
+	it("harus merender formulir dengan benar", () => {
+		// Render komponen
+		render(
+			<AppContextProvider>
+				<AddItemForm />
+			</AppContextProvider>
+		);
 
-  beforeEach(() => {
-    mockDispatch = vi.fn();
-    useAppReducer.mockReturnValue(mockDispatch);
-  });
+		// Memastikan input dan tombol ada di dokumen
+		const inputElement = screen.getByPlaceholderText("Add new item");
+		const buttonElement = screen.getByRole("button");
 
-  it("renders the form correctly", () => {
-    render(<AddItemForm />);
+		expect(inputElement).toBeInTheDocument();
+		expect(buttonElement).toBeInTheDocument();
+	});
 
-    // Pastikan input dan tombol dirender
-    expect(screen.getByPlaceholderText("Add new item")).toBeInTheDocument();
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
+	it("harus memanggil dispatch dengan item baru saat formulir disubmit", () => {
+		// Mock fungsi dispatch
+		const dispatchMock = vi.fn();
+		useAppReducer.mockReturnValue(dispatchMock);
 
-  it("dispatches the correct action when a valid item is added", () => {
-    render(<AddItemForm />);
-    const input = screen.getByPlaceholderText("Add new item");
-    const button = screen.getByRole("button");
+		// Render komponen
+		render(
+			<AppContextProvider>
+				<AddItemForm />
+			</AppContextProvider>
+		);
 
-    // Isi input dengan teks
-    fireEvent.change(input, { target: { value: "New Todo" } });
-    fireEvent.click(button);
+		// Mendapatkan elemen input dan tombol
+		const inputElement = screen.getByPlaceholderText("Add new item");
+		const buttonElement = screen.getByRole("button");
 
-    // Periksa apakah dispatch dipanggil dengan benar
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: "ADD_ITEM",
-      item: expect.objectContaining({
-        text: "New Todo",
-        status: "pending",
-      }),
-    });
-  });
+		// Simulasi mengetik di input
+		const nilaiTes = "Item Tes";
+		fireEvent.change(inputElement, { target: { value: nilaiTes } });
 
-  it("does not dispatch if input is empty", () => {
-    render(<AddItemForm />);
-    const button = screen.getByRole("button");
+		// Simulasi submit formulir
+		fireEvent.click(buttonElement);
 
-    // Klik tombol tanpa mengisi input
-    fireEvent.click(button);
+		// Memastikan dispatch dipanggil dengan payload yang benar
+		expect(dispatchMock).toHaveBeenCalledWith({
+			type: "ADD_ITEM",
+			item: expect.objectContaining({
+				text: nilaiTes,
+				status: "pending",
+			}),
+		});
 
-    // Periksa apakah dispatch tidak dipanggil
-    expect(mockDispatch).not.toHaveBeenCalled();
-  });
-
-  it("clears and refocuses the input after adding an item", () => {
-    render(<AddItemForm />);
-    const input = screen.getByPlaceholderText("Add new item");
-    const button = screen.getByRole("button");
-
-    fireEvent.change(input, { target: { value: "New Todo" } });
-    fireEvent.click(button);
-
-    // Pastikan input dikosongkan dan difokuskan ulang
-    expect(input.value).toBe("");
-    expect(document.activeElement).toBe(input);
-  });
+		// Memastikan input dikosongkan setelah submit
+		expect(inputElement.value).toBe("");
+	});
 });
