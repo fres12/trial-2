@@ -14,7 +14,7 @@ COPY . .
 # Configure npm cache location
 RUN npm config set cache /tmp/npm-cache
 
-# Set npm global directory to avoid permission issues
+# Set npm global directory to avoid permission issue
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
 
