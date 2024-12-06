@@ -1,36 +1,43 @@
-# Gunakan Node.js versi LTS terbaru
 FROM node:22
 
-# Install dependencies yang diperlukan untuk Electron
-RUN apt-get update && apt-get install -yq --no-install-recommends \
-    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 \
-    libxss1 libasound2 libdrm2 libgbm1 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install dependencies needed for Electron
+RUN apt-get update && apt-get install \
+    git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 libdrm2 libgbm1 \
+    -yq --no-install-suggests --no-install-recommends \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Tambahkan user non-root
+# Add a non-root user
 RUN useradd -m -d /custom-app custom-app
-
-# Atur direktori kerja
 WORKDIR /custom-app
 
-# Salin file package.json dan package-lock.json terlebih dahulu
+# Copy only package.json and package-lock.json first
 COPY package*.json ./
 
-# Install dependencies sebagai user root
-RUN npm install --no-optional && \
-    npm cache clean --force
+# Configure npm cache location
+RUN npm config set cache /tmp/npm-cache
 
-# Salin semua file dari direktori proyek ke dalam container
+# Set npm global directory to avoid permission issues
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
+
+# Install dependencies as root
+USER root
+RUN npm cache clean --force
+RUN npm install
+
+# Set ownership of the working directory and node_modules
+RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
+
+# Copy the rest of the application files
 COPY . .
 
-# Set hak akses direktori
-RUN chown -R custom-app:custom-app /custom-app
+# Electron-specific permissions
+USER root
+RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox
+RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 
-# Jalankan aplikasi dengan user non-root
+# Switch back to the non-root user
 USER custom-app
 
-# Port default yang digunakan aplikasi
-EXPOSE 3000
-
-# Jalankan aplikasi
-CMD ["npm", "run", "start"]
+# Start the application
+CMD npm run start
