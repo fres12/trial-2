@@ -37,5 +37,5 @@ RUN chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 # Switch back to the non-root user
 USER custom-app
 
-# Start the application
+# Start the applicationn
 CMD npm run start
