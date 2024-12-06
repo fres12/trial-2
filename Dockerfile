@@ -16,11 +16,11 @@ COPY package.json package-lock.json ./
 # Debug to check if package.json is copied
 RUN ls -la
 
-# Install npm dependencies
-RUN npm install
-
 # Copy the rest of the application
 COPY . .
+
+# Install npm dependencies
+RUN npm install
 
 # Debug to ensure other files are copied
 RUN ls -la
