@@ -1,5 +1,3 @@
-FROM node:22
-
 # Install dependencies for Electron
 RUN apt-get update && apt-get install \
     git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 libdrm2 libgbm1 \
@@ -16,19 +14,19 @@ COPY package.json package-lock.json ./
 # Debug to check if package.json is copied
 RUN ls -la
 
-# Fix permissions for Electron chrome-sandbox binary
-USER root
-RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox && \
-    chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
+# Copy the rest of the application
+COPY . .
 
 # Install npm dependencies
 RUN npm install
 
-# Copy the rest of the application
-COPY . .
-
 # Debug to ensure other files are copied
 RUN ls -la
+
+# Fix permissions for Electron chrome-sandbox binary AFTER npm install
+USER root
+RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox && \
+    chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 
 # Set npm cache location
 RUN npm config set cache /tmp/npm-cache
