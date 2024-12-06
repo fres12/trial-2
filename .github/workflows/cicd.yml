@@ -42,7 +42,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i key-pair.pem ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key-pair-devopspso.pem ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} << 'EOF'
             docker pull fressrg/trial1:latest
             docker rm -f devops-pso-container || true
             docker run -d -p 3000:3000 --name devops-pso-container fressrg/trial1
