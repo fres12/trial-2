@@ -10,16 +10,22 @@ RUN apt-get update && apt-get install \
 RUN useradd -m -d /custom-app custom-app
 WORKDIR /custom-app
 
-# Copy only package.json and package-lock.json for dependency installation
+# Copy package.json and package-lock.json first
 COPY package.json package-lock.json ./
 
-# Install npm dependencies as root
+# Debug to check if package.json is copied
+RUN ls -la
+
+# Install npm dependencies
 RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
-# Configure npm cache location
+# Debug to ensure other files are copied
+RUN ls -la
+
+# Set npm cache location
 RUN npm config set cache /tmp/npm-cache
 
 # Set npm global directory to avoid permission issues
