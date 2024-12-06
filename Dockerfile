@@ -16,11 +16,16 @@ COPY package.json package-lock.json ./
 # Debug to check if package.json is copied
 RUN ls -la
 
-# Copy the rest of the application
-COPY . .
+# Fix permissions for Electron chrome-sandbox binary
+USER root
+RUN chown root /custom-app/node_modules/electron/dist/chrome-sandbox && \
+    chmod 4755 /custom-app/node_modules/electron/dist/chrome-sandbox
 
 # Install npm dependencies
 RUN npm install
+
+# Copy the rest of the application
+COPY . .
 
 # Debug to ensure other files are copied
 RUN ls -la
