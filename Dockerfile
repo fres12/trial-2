@@ -9,9 +9,7 @@ RUN apt-get update && apt-get install \
 # Add a non-root user
 RUN useradd -m -d /custom-app custom-app
 WORKDIR /custom-app
-
-# Copy only package.json and package-lock.json first
-COPY package*.json ./
+COPY . .
 
 # Configure npm cache location
 RUN npm config set cache /tmp/npm-cache
@@ -23,13 +21,13 @@ ENV PATH=$PATH:/home/node/.npm-global/bin
 # Install dependencies as root
 USER root
 RUN npm cache clean --force
-RUN npm install
 
 # Set ownership of the working directory and node_modules
 RUN mkdir -p /custom-app/node_modules && chown -R custom-app:custom-app /custom-app
 
-# Copy the rest of the application files
-COPY . .
+# Install npm dependencies as the non-root user
+USER custom-app
+RUN npm install
 
 # Electron-specific permissions
 USER root
