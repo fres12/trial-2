@@ -36,8 +36,9 @@ jobs:
 
       - name: Upload SSH Key
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key-pair.pem
-          chmod 400 key-pair.pem
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key-pair-devopspso.pem
+          chmod 400 "key-pair-devopspso.pem"
+          chmod 600 "key-pair-devopspso.pem"
 
       - name: Deploy to EC2
         run: |
