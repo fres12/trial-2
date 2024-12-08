@@ -2,7 +2,7 @@ name: Initial configuration
 on:
   push:
     branches:
-      - main
+      - cobalagi
 
 jobs:
   build:
@@ -28,9 +28,9 @@ jobs:
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Pull image from docker hub
         run: docker pull fressrg/trial1:latest
-      - name: Run Jest tests
+      - name: Run test
         run: |
-          docker run --rm fressrg/trial1:latest sh -c "npm install && npm test"
+          docker run --rm fressrg/trial1:latest sh -c "npm install --legacy-peer-deps && npm test"
 
   terraform:
     needs: test
@@ -89,10 +89,8 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i "key-pair-devopspso.pem" ubuntu@.ap-southeast-2.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key-pair-devopspso.pem ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} << 'EOF'
             docker pull fressrg/trial1:latest
             docker rm -f devops-pso-container || true
             docker run -d -p 3000:3000 --name devops-pso-container fressrg/trial1
           EOF
-        env:
-          EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
