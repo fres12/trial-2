@@ -1,15 +1,10 @@
+import PropTypes from 'prop-types';
 import { useAppReducer } from "../AppContext.jsx";
 import styles from "./Item.module.css";
 
+// Individual todo item
 function Item({ item }) {
   const dispatch = useAppReducer();
-
-  // Validasi properti item
-  if (!item) {
-    console.error("Item component requires a valid 'item' prop.");
-    return null;
-  }
-
   let text = item.text;
   let paused = item.status === "paused";
   let completed = item.status === "completed";
@@ -34,7 +29,12 @@ function Item({ item }) {
   }
 
   return (
-    <div className={styles.item} tabIndex="0">
+    <div
+      className={`${styles.item} ${
+        paused ? styles.paused : completed ? styles.completed : ""
+      }`}
+      tabIndex="0"
+    >
       <div className={styles.itemname}>{text}</div>
       <div
         className={`${styles.buttons} ${
@@ -45,12 +45,14 @@ function Item({ item }) {
         <button
           className={styles.delete}
           onClick={deleteItem}
+          data-testid="delete-button"
           tabIndex="0"
         ></button>
         {!paused && !completed && (
           <button
             className={styles.pause}
             onClick={pauseItem}
+            data-testid="pause-button"
             tabIndex="0"
           ></button>
         )}
@@ -58,6 +60,7 @@ function Item({ item }) {
           <button
             className={styles.resume}
             onClick={resumeItem}
+            aria-label="Resume item"
             tabIndex="0"
           ></button>
         )}
@@ -65,6 +68,7 @@ function Item({ item }) {
           <button
             className={styles.complete}
             onClick={completeItem}
+            aria-label="Complete item"
             tabIndex="0"
           ></button>
         )}
@@ -72,5 +76,13 @@ function Item({ item }) {
     </div>
   );
 }
+
+// Menambahkan validasi prop untuk item dan propertinya
+Item.propTypes = {
+  item: PropTypes.shape({
+    text: PropTypes.string.isRequired,
+    status: PropTypes.oneOf(['pending', 'paused', 'completed']).isRequired,
+  }).isRequired,
+};
 
 export default Item;

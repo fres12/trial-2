@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer } from "react";
 import { loadState, saveState } from "./local-storage.js";
 import { format } from "date-fns";
+import PropTypes from 'prop-types';
 
 export const AppContext = createContext();
 
@@ -107,3 +108,6 @@ export function AppStateProvider({ children }) {
 		</div>
 	);
 }
+AppStateProvider.propTypes = {
+	children: PropTypes.node.isRequired,
+};

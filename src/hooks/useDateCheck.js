@@ -8,12 +8,6 @@ export default function useDateCheck() {
 	const storedDate = parseISO(`${date.year}-${date.month}-${date.day}`);
 
 	useEffect(() => {
-		let resetNotification = null;
-
-		window?.onNotificationSettingsChange?.((data) => {
-			resetNotification = data.resetNotification;
-		});
-
 		const interval = setInterval(() => {
 			let nd = new Date();
 			let currentDate = parseISO(
@@ -21,11 +15,6 @@ export default function useDateCheck() {
 			);
 
 			if (isBefore(storedDate, currentDate)) {
-				if (resetNotification) {
-					new Notification("todometer reset time!", {
-						body: "It's a new day! Your todos are being reset.",
-					});
-				}
 				dispatch({ type: "RESET_ALL" });
 				window.location.reload();
 			}
