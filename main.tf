@@ -19,11 +19,26 @@ provider "aws" {
 }
 
 resource "aws_instance" "app_server" {
-  ami           = "ami-001f2488b35ca8aad"
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = "key-pair-devopspso"
 
   tags = {
     Name = "to-do-list"
+  }
+
+  lifecycle {
+    create_before_destroy = false
+  }
+}
+
+
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "ec2-instance/terraform.tfstate"
+    region         = "ap-southeast-2"
+    encrypt        = true
+    dynamodb_table = "terraform-lock"
   }
 }
