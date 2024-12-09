@@ -31,14 +31,3 @@ resource "aws_instance" "app_server" {
     create_before_destroy = false
   }
 }
-
-
-terraform {
-  backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "ec2-instance/terraform.tfstate"
-    region         = "ap-southeast-2"
-    encrypt        = true
-    dynamodb_table = "terraform-lock"
-  }
-}
