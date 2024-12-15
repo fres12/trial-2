@@ -7,7 +7,7 @@ export const AppContext = createContext();
 
 export function useAppState() {
 	const state = useContext(AppContext)[0];
-	console.log("Current state:", state); // Debugging state
+	console.log("Current state:", state); // Debugging statee
 	return state;
 }
 
